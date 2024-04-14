@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
         message_box = QMessageBox()
         message_box.setWindowTitle("关于")
         message_box.setText("这是一款基于PYQT的点云软件")
-        message_box.setStandardButtons(QMessageBox)
+        message_box.exec_()
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = MainWindow()
