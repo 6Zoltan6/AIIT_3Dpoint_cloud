@@ -448,7 +448,7 @@ class AppWindow:
                                    AppWindow.MENU_SHOW_SETTINGS)
             settings_menu.set_checked(AppWindow.MENU_SHOW_SETTINGS, True)
             help_menu = gui.Menu()
-            help_menu.add_item("About", AppWindow.MENU_ABOUT)
+            help_menu.add_item("About", AppWindow.MENU_ABOUT) #21
             #未实现里面
             Denoising_menu = gui.Menu()
             Filtering_menu = gui.Menu()

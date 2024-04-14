@@ -4,7 +4,7 @@ import os
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QMainWindow, QAction, qApp, QApplication, QFileDialog, QFrame, QLabel, QTextEdit, \
-    QVBoxLayout
+    QVBoxLayout, QMessageBox
 
 
 class MainWindow(QMainWindow):
@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
         filterMenu = menubar.addMenu('滤波')
         registerMenu = menubar.addMenu('配准')
         segmentationMenu = menubar.addMenu('分割')
-
+        HelpMenu=menubar.addMenu('帮助')
         # 文件菜单中加载点云的功能
         loadCloudAction = QAction('加载点云', self)
         loadCloudAction.triggered.connect(self.loadPointCloud)
@@ -35,6 +35,10 @@ class MainWindow(QMainWindow):
         exitAction = QAction('退出', self)
         exitAction.triggered.connect(qApp.quit)
         fileMenu.addAction(exitAction)
+
+        AboutAction=QAction('关于',self)
+        AboutAction.triggered.connect(self.show_about_dialog)
+        HelpMenu.addAction(AboutAction)
 
         # 主视图布局
         self.main_widget = QtWidgets.QWidget()
@@ -101,6 +105,12 @@ class MainWindow(QMainWindow):
         self.resize(1600, 1200)
         self.show()
 
+    def show_about_dialog(self):
+        message_box = QMessageBox()
+        message_box.setWindowTitle("关于")
+        message_box.setText("这是款基于PYQT5的点云数据软件")
+        message_box.setStandardButtons(QMessageBox.Ok)
+        message_box.exec_()
     def loadPointCloud(self):
         fname = QFileDialog.getOpenFileName(self, 'Open file', '/home')[0]
 
