@@ -2,7 +2,7 @@ import os
 import sys
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QMainWindow, QAction, QApplication, QFileDialog, QLabel, QTextEdit, QVBoxLayout, \
-    QHBoxLayout, QSplitter, QFrame, qApp
+    QHBoxLayout, QSplitter, QFrame, qApp, QMessageBox
 
 
 class MainWindow(QMainWindow):
@@ -22,6 +22,8 @@ class MainWindow(QMainWindow):
         filterMenu = menubar.addMenu('滤波')
         registerMenu = menubar.addMenu('配准')
         segmentationMenu = menubar.addMenu('分割')
+        HelpMenu=menubar.addMenu('帮助')
+
 
         loadCloudAction = QAction('加载点云', self)
         loadCloudAction.triggered.connect(self.loadPointCloud)
@@ -30,6 +32,11 @@ class MainWindow(QMainWindow):
         exitAction = QAction('退出', self)
         exitAction.triggered.connect(qApp.quit)
         fileMenu.addAction(exitAction)
+
+        AboutAction = QAction('关于', self)
+        AboutAction.triggered.connect(self.show_about_dialog)
+        HelpMenu.addAction(AboutAction)
+
 
         self.main_widget = QtWidgets.QWidget()
         self.setCentralWidget(self.main_widget)
@@ -101,7 +108,11 @@ class MainWindow(QMainWindow):
             # 这里可以加载并处理点云数据
             pass
 
-
+    def show_about_dialog(self):
+        message_box = QMessageBox()
+        message_box.setWindowTitle("关于")
+        message_box.setText("这是一款基于PYQT的点云软件")
+        message_box.setStandardButtons(QMessageBox)
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = MainWindow()
