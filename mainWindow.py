@@ -24,8 +24,16 @@ from demo import Ui_MainWindow
 
 """ ---------------------------初始化变量--------------------------------- """
 
-PARAM_DICT = {}
-
+# PARAM_DICT = {}
+PARAM_DICT = {'data_tree_all': {},
+              'data_subtree_all': {},}
+OBJECT_DICT = {}
+VIEW_DICT = {}
+CURRENT_OBJECT = {}
+BOUND_BOX = []
+PROPERTY_DICT = {}
+check_State = {}
+pick_Actor = []
 
 """ ---------------------------主窗口--------------------------------- """
 
