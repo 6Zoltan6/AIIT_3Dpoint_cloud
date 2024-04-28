@@ -50,13 +50,13 @@ class MainWindow(QMainWindow):
         self.ui.action_open.triggered.connect(self.open_file)
         self.ui.action_open1.triggered.connect(self.open_file)
         #1111
+        self.ui.action_left.triggered.connect(self.leftview_change)
+        self.ui.action_right.triggered.connect(self.rightview_change)
+        self.ui.action_front.triggered.connect(self.frontview_change)
+        self.ui.action_back.triggered.connect(self.backview_change)
+        self.ui.action_above.triggered.connect(self.aboveview_change)
+        self.ui.action_bottom.triggered.connect(self.bottomview_change)
 
-        # self.ui.action_left.triggered.connect(self.leftview_change)
-        # self.ui.action_right.triggered.connect(self.rightview_change)
-        # self.ui.action_front.triggered.connect(self.frontview_change)
-        # self.ui.action_back.triggered.connect(self.backview_change)
-        # self.ui.action_above.triggered.connect(self.aboveview_change)
-        # self.ui.action_bottom.triggered.connect(self.bottomview_change)
         # self.ui.action_2.triggered.connect(self.save_file)
 
         #1111
@@ -259,11 +259,13 @@ class MainWindow(QMainWindow):
                 # 赋值current，建立包围盒
                 CURRENT_OBJECT = {}
                 CURRENT_OBJECT[item1.text(0)] = OBJECT_DICT[item1.text(0)]
+                print(CURRENT_OBJECT[item1.text(0)])
                 # 清除包围盒
                 if BOUND_BOX != []:
                     self.ren.RemoveActor(BOUND_BOX)
+                    print(self.ren.RemoveActor(BOUND_BOX))
                 self.show_boundbox(item1.text(0))
-
+                print(self.show_boundbox(item1.text(0)))
                 # 更新属性表
                 self.update_tableWidget(status='updata', info=item1)
 
@@ -321,44 +323,44 @@ class MainWindow(QMainWindow):
             self.spinwidth.setValue(PROPERTY_DICT[info.text(0)]['Pointsize'])
             self.ui.tableWidget.setCellWidget(3, 1, self.spinwidth)
             self.spinwidth.valueChanged.connect(self.sizechange)
-def frontview_change(self):
-    focus_point = self.camera.GetFocalPoint()
-    dis = self.camera.GetDistance()
-    self.camera.SetPosition(focus_point[0], focus_point[1] - dis, focus_point[2])
-    self.camera.SetViewUp(0, 0, 1)
-    self.renWin.Render()
+    def frontview_change(self):
+         focus_point = self.camera.GetFocalPoint()
+         dis = self.camera.GetDistance()
+         self.camera.SetPosition(focus_point[0], focus_point[1] - dis, focus_point[2])
+         self.camera.SetViewUp(0, 0, 1)
+         self.renWin.Render()
 
-def backview_change(self):
-    focus_point = self.camera.GetFocalPoint()
-    dis = self.camera.GetDistance()
-    self.camera.SetPosition(focus_point[0], focus_point[1] + dis, focus_point[2])
-    self.camera.SetViewUp(0, 0, 1)
-    self.renWin.Render()
+    def backview_change(self):
+         focus_point = self.camera.GetFocalPoint()
+         dis = self.camera.GetDistance()
+         self.camera.SetPosition(focus_point[0], focus_point[1] + dis, focus_point[2])
+         self.camera.SetViewUp(0, 0, 1)
+         self.renWin.Render()
 
-def leftview_change(self):
-    focus_point = self.camera.GetFocalPoint()
-    dis = self.camera.GetDistance()
-    self.camera.SetPosition(focus_point[0] - dis, focus_point[1], focus_point[2])
-    self.camera.SetViewUp(0, 0, 1)
-    self.renWin.Render()
+    def leftview_change(self):
+         focus_point = self.camera.GetFocalPoint()
+         dis = self.camera.GetDistance()
+         self.camera.SetPosition(focus_point[0] - dis, focus_point[1], focus_point[2])
+         self.camera.SetViewUp(0, 0, 1)
+         self.renWin.Render()
 
-def rightview_change(self):
-    focus_point = self.camera.GetFocalPoint()
-    dis = self.camera.GetDistance()
-    self.camera.SetPosition(focus_point[0] + dis, focus_point[1], focus_point[2])
-    self.camera.SetViewUp(0, 0, 1)
-    self.renWin.Render()
+    def rightview_change(self):
+         focus_point = self.camera.GetFocalPoint()
+         dis = self.camera.GetDistance()
+         self.camera.SetPosition(focus_point[0] + dis, focus_point[1], focus_point[2])
+         self.camera.SetViewUp(0, 0, 1)
+         self.renWin.Render()
 
-def aboveview_change(self):
-    focus_point = self.camera.GetFocalPoint()
-    dis = self.camera.GetDistance()
-    self.camera.SetPosition(focus_point[0], focus_point[1], focus_point[2] + dis)
-    self.camera.SetViewUp(0, 1, 0)
-    self.renWin.Render()
+    def aboveview_change(self):
+         focus_point = self.camera.GetFocalPoint()
+         dis = self.camera.GetDistance()
+         self.camera.SetPosition(focus_point[0], focus_point[1], focus_point[2] + dis)
+         self.camera.SetViewUp(0, 1, 0)
+         self.renWin.Render()
 
-def bottomview_change(self):
-    focus_point = self.camera.GetFocalPoint()
-    dis = self.camera.GetDistance()
-    self.camera.SetPosition(focus_point[0], focus_point[1], focus_point[2] - dis)
-    self.camera.SetViewUp(0, -1, 0)
-    self.renWin.Render()
+    def bottomview_change(self):
+         focus_point = self.camera.GetFocalPoint()
+         dis = self.camera.GetDistance()
+         self.camera.SetPosition(focus_point[0], focus_point[1], focus_point[2] - dis)
+         self.camera.SetViewUp(0, -1, 0)
+         self.renWin.Render()
