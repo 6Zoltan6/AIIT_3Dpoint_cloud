@@ -43,23 +43,32 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.init_ui()
-
+        #111
         self.update_treeWidget(status='init')
         self.update_tableWidget(status='init')
-
+        #
         self.ui.action_open.triggered.connect(self.open_file)
         self.ui.action_open1.triggered.connect(self.open_file)
+        #1111
 
+        # self.ui.action_left.triggered.connect(self.leftview_change)
+        # self.ui.action_right.triggered.connect(self.rightview_change)
+        # self.ui.action_front.triggered.connect(self.frontview_change)
+        # self.ui.action_back.triggered.connect(self.backview_change)
+        # self.ui.action_above.triggered.connect(self.aboveview_change)
+        # self.ui.action_bottom.triggered.connect(self.bottomview_change)
+        # self.ui.action_2.triggered.connect(self.save_file)
+
+        #1111
         self.update_listWidget(info='*** 初始化成功 ***')
-
 
     def init_ui(self):
         self.vtkWidget = QVTKRenderWindowInteractor(self)
         self.ui.showlayout.addWidget(self.vtkWidget)
         self.colors = vtk.vtkNamedColors()
         self.ren = vtk.vtkRenderer()
-        self.ren.SetBackground(0, 0, 0)
-        self.ren.SetBackground2(255, 149, 105)
+        self.ren.SetBackground(0,191,255)
+        self.ren.SetBackground2(0,191,255)
         self.ren.GradientBackgroundOn()
         self.renWin = self.vtkWidget.GetRenderWindow()
         self.renWin.AddRenderer(self.ren)
@@ -152,6 +161,7 @@ class MainWindow(QMainWindow):
         self.ui.listWidget.setCurrentRow(self.ui.listWidget.count() - 1)
 
     # 读取后显示函数
+    # 读取后显示函数
     def show_point(self, point, file_name, colors, todo='add'):
         global VIEW_DICT
         if todo == 'replace':
@@ -199,7 +209,6 @@ class MainWindow(QMainWindow):
                 0, QIcon('./image/导出点云.png'))
             PARAM_DICT['data_subtree_all'][filename.split('.')[0]][1].setCheckState(0, Qt.Checked)
             check_State[filename.split('.')[0]] = 2
-
 
     # 数据栏点击触发函数
     def check_onClicked(self, item):
@@ -252,7 +261,7 @@ class MainWindow(QMainWindow):
                 # 清除包围盒
                 if BOUND_BOX != []:
                     self.ren.RemoveActor(BOUND_BOX)
-                self.show_boundbox(item1.text(0))
+               # self.show_boundbox(item1.text(0))
 
                 # 更新属性表
                 self.update_tableWidget(status='updata', info=item1)
@@ -311,3 +320,44 @@ class MainWindow(QMainWindow):
             self.spinwidth.setValue(PROPERTY_DICT[info.text(0)]['Pointsize'])
             self.ui.tableWidget.setCellWidget(3, 1, self.spinwidth)
             self.spinwidth.valueChanged.connect(self.sizechange)
+def frontview_change(self):
+    focus_point = self.camera.GetFocalPoint()
+    dis = self.camera.GetDistance()
+    self.camera.SetPosition(focus_point[0], focus_point[1] - dis, focus_point[2])
+    self.camera.SetViewUp(0, 0, 1)
+    self.renWin.Render()
+
+def backview_change(self):
+    focus_point = self.camera.GetFocalPoint()
+    dis = self.camera.GetDistance()
+    self.camera.SetPosition(focus_point[0], focus_point[1] + dis, focus_point[2])
+    self.camera.SetViewUp(0, 0, 1)
+    self.renWin.Render()
+
+def leftview_change(self):
+    focus_point = self.camera.GetFocalPoint()
+    dis = self.camera.GetDistance()
+    self.camera.SetPosition(focus_point[0] - dis, focus_point[1], focus_point[2])
+    self.camera.SetViewUp(0, 0, 1)
+    self.renWin.Render()
+
+def rightview_change(self):
+    focus_point = self.camera.GetFocalPoint()
+    dis = self.camera.GetDistance()
+    self.camera.SetPosition(focus_point[0] + dis, focus_point[1], focus_point[2])
+    self.camera.SetViewUp(0, 0, 1)
+    self.renWin.Render()
+
+def aboveview_change(self):
+    focus_point = self.camera.GetFocalPoint()
+    dis = self.camera.GetDistance()
+    self.camera.SetPosition(focus_point[0], focus_point[1], focus_point[2] + dis)
+    self.camera.SetViewUp(0, 1, 0)
+    self.renWin.Render()
+
+def bottomview_change(self):
+    focus_point = self.camera.GetFocalPoint()
+    dis = self.camera.GetDistance()
+    self.camera.SetPosition(focus_point[0], focus_point[1], focus_point[2] - dis)
+    self.camera.SetViewUp(0, -1, 0)
+    self.renWin.Render()

@@ -15,6 +15,6 @@ if __name__ == "__main__":
     os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = plugin_path
     app = QApplication(sys.argv)
     mainwindow = MainWindow()
-    mainwindow.setWindowIcon(QIcon('./image/导出点云.png'))
+    mainwindow.setWindowIcon(QIcon('1.jpg'))
     mainwindow.show()
     sys.exit(app.exec_())
