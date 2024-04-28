@@ -161,7 +161,7 @@ class MainWindow(QMainWindow):
         self.ui.listWidget.setCurrentRow(self.ui.listWidget.count() - 1)
 
     # 读取后显示函数
-    # 读取后显示函数
+
     def show_point(self, point, file_name, colors, todo='add'):
         global VIEW_DICT
         if todo == 'replace':
@@ -209,6 +209,7 @@ class MainWindow(QMainWindow):
                 0, QIcon('./image/导出点云.png'))
             PARAM_DICT['data_subtree_all'][filename.split('.')[0]][1].setCheckState(0, Qt.Checked)
             check_State[filename.split('.')[0]] = 2
+
 
     # 数据栏点击触发函数
     def check_onClicked(self, item):
@@ -261,7 +262,7 @@ class MainWindow(QMainWindow):
                 # 清除包围盒
                 if BOUND_BOX != []:
                     self.ren.RemoveActor(BOUND_BOX)
-               # self.show_boundbox(item1.text(0))
+                self.show_boundbox(item1.text(0))
 
                 # 更新属性表
                 self.update_tableWidget(status='updata', info=item1)
