@@ -66,6 +66,9 @@ class MainWindow(QMainWindow):
         self.ui.action_29.triggered.connect(self.change_background_color)
         # 绑定函数
         self.ui.action_2.triggered.connect(self.save_file)
+        self.ui.action_16.triggered.connect(self.height_color)
+        self.ui.action_50.triggered.connect(self.intensity_color)
+        self.ui.action_11.triggered.connect(self.merge)
         self.update_listWidget(info='*** 初始化成功 ***')
 
 
@@ -520,3 +523,96 @@ class MainWindow(QMainWindow):
                     self.update_listWidget('保存文件成功：' + path)
                 elif '.' in path:
                     QMessageBox.warning(self.ui.mainWidget, '警告', '格式不支持！')
+
+            # 函数实现
+
+    def height_color(self):
+        global VIEW_DICT, PROPERTY_DICT
+        try:
+            item = self.ui.treeWidget.currentItem()
+            vtk_polydata = VIEW_DICT[item.text(0)][2]
+            zmax = max(CURRENT_OBJECT[item.text(0)]['data'][:, 2])
+            zmin = min(CURRENT_OBJECT[item.text(0)]['data'][:, 2])
+
+            height_array = numpy_to_vtk(CURRENT_OBJECT[item.text(0)]['data'][:, 2])
+            vtk_polydata.GetPointData().SetScalars(height_array)
+
+            # 创建一个vtkLookupTable对象，用来设置颜色映射
+            lookup_table = vtk.vtkLookupTable()
+            lookup_table.SetTableRange(zmin, zmax)
+            lookup_table.SetHueRange(0.6667, 0)
+            lookup_table.SetSaturationRange(1, 1)
+            lookup_table.SetValueRange(1, 1)
+            lookup_table.Build()
+
+            vtk_vertex = vtk.vtkVertexGlyphFilter()
+            vtk_vertex.SetInputData(vtk_polydata)
+            mapper = vtk.vtkPolyDataMapper()
+            mapper.SetInputConnection(vtk_vertex.GetOutputPort())
+            mapper.SetLookupTable(lookup_table)
+            mapper.SetScalarRange(zmin, zmax)
+
+            pointCloudActor = vtk.vtkActor()
+            pointCloudActor.SetMapper(mapper)
+
+            self.ren.RemoveActor(VIEW_DICT[item.text(0)][0])
+            VIEW_DICT[item.text(0)][0] = pointCloudActor
+            self.ren.AddActor(pointCloudActor)
+            self.renWin.Render()
+            # PROPERTY_DICT[item.text(0)]['colors'] = ['colorFunc', lookup_table]
+
+        except:
+            pass
+
+        # try:
+        #     intensity = las.intensity.astype(int)
+        #     intensity_ = intensity / np.max(intensity) * 255
+        #     if math.isnan(intensity_[0]):
+        #         intensity_show = 255 * np.ones((len(intensity), 3))
+        #     else:
+        #         intensity_show = np.vstack((intensity_, intensity_, intensity_)).transpose()
+        #     if color == 'None':
+        #         color = 'Intensity'
+        # except:
+        #     intensity = None
+        #     intensity_show = 255 * np.ones((point.shape[0], 3))
+        #
+        # PROPERTY_DICT[file_name] = {'Name': file_name, 'Visible': 1, 'Color': color, 'colors': colors,
+        #                             'Pointnum': -1, 'Pointsize': 1, 'intensity': intensity,
+        #                             'intensity_show': intensity_show, 'None_show': 255 * np.ones((point.shape[0], 3))}
+
+    def intensity_color(self):
+        item = self.ui.treeWidget.currentItem()
+        try:
+            self.show_point(CURRENT_OBJECT[item.text(0)]['data'], item.text(0),
+                            PROPERTY_DICT[item.text(0)]['intensity_show'], todo='replace')
+        except:
+            pass
+
+    def merge(self):
+        try:
+            items = self.ui.treeWidget.selectedItems()
+            if len(items) < 2:
+                QMessageBox.warning(self.ui.mainWidget, '警告', '请选中两个点云！')
+                return
+            parent = items[0].parent()
+        except:
+            parent = None
+        if parent is None:
+            pass
+            QMessageBox.warning(self.ui.mainWidget, '警告', '请先选中数据对象！')
+        else:
+            current_data1 = OBJECT_DICT[items[0].text(0)]['data']
+            colors1 = PROPERTY_DICT[items[0].text(0)]['colors']
+            current_data2 = OBJECT_DICT[items[1].text(0)]['data']
+            colors2 = PROPERTY_DICT[items[1].text(0)]['colors']
+            current_data = np.vstack((current_data1, current_data2))
+            colors = np.vstack((colors1, colors2))
+            file_name = 'merged'
+            OBJECT_DICT[file_name] = {'type': 'point'}
+            OBJECT_DICT[file_name]['data'] = current_data
+            self.update_treeWidget(status='addsub', info=[parent.text(0), file_name])
+            PROPERTY_DICT[file_name] = {'Name': file_name, 'Visible': 1, 'Color': 'RGB', 'colors': colors,
+                                        'Pointnum': len(OBJECT_DICT[file_name]['data']), 'Pointsize': 1}
+            self.show_point(OBJECT_DICT[file_name]['data'], file_name, colors)
+
