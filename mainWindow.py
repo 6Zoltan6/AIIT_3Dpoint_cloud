@@ -54,14 +54,18 @@ class MainWindow(QMainWindow):
 
         self.ui.action_open.triggered.connect(self.open_file)
         self.ui.action_open1.triggered.connect(self.open_file)
+        self.ui.action_left.triggered.connect(self.leftview_change)
+        self.ui.action_right.triggered.connect(self.rightview_change)
+        self.ui.action_front.triggered.connect(self.frontview_change)
+        self.ui.action_back.triggered.connect(self.backview_change)
+        self.ui.action_above.triggered.connect(self.aboveview_change)
+        self.ui.action_bottom.triggered.connect(self.bottomview_change)
 
         self.ui.action_4.triggered.connect(self.close)
-
-
-
-
-
-
+        self.ui.action_15.triggered.connect(self.change_point_color)
+        self.ui.action_29.triggered.connect(self.change_background_color)
+        # 绑定函数
+        self.ui.action_2.triggered.connect(self.save_file)
         self.update_listWidget(info='*** 初始化成功 ***')
 
 
@@ -434,3 +438,85 @@ class MainWindow(QMainWindow):
         self.camera.SetPosition(focus_point[0], focus_point[1], focus_point[2] - dis)
         self.camera.SetViewUp(0, -1, 0)
         self.renWin.Render()
+
+    def color_transform(self, value):
+        value = value.upper()
+        digit = list(map(str, range(10))) + list("ABCDEF")
+        if isinstance(value, tuple):
+            string = '#'
+            for i in value:
+                a1 = i // 16
+                a2 = i % 16
+                string += digit[a1] + digit[a2]
+            return string
+        elif isinstance(value, str):
+            a1 = digit.index(value[1]) * 16 + digit.index(value[2])
+            a2 = digit.index(value[3]) * 16 + digit.index(value[4])
+            a3 = digit.index(value[5]) * 16 + digit.index(value[6])
+            return (a1, a2, a3)
+
+    def change_point_color(self):
+        global VIEW_DICT, PROPERTY_DICT
+        objcolor = QColorDialog.getColor()
+        if objcolor.isValid():
+            objcolor = self.color_transform(objcolor.name())
+            try:
+                item = self.ui.treeWidget.currentItem()
+                vtk_polydata = VIEW_DICT[item.text(0)][2]
+                colors = np.array([[objcolor[0], objcolor[1], objcolor[2]]])
+                colors = np.repeat(colors, PROPERTY_DICT[item.text(0)]['Pointnum'], axis=0)
+                vtk_polydata.GetPointData().SetScalars(
+                    numpy_to_vtk(colors, deep=True, array_type=vtk.VTK_UNSIGNED_CHAR))
+                VIEW_DICT[item.text(0)][2] = vtk_polydata
+                self.renWin.Render()
+                PROPERTY_DICT[item.text(0)]['colors'] = colors
+            except:
+                pass
+
+    # 改变背景颜色函数
+    def change_background_color(self):
+        objcolor = QColorDialog.getColor()
+        if objcolor.isValid():
+            objcolor = self.color_transform(objcolor.name())
+            self.ren.SetBackground(objcolor[0] / 255, objcolor[1] / 255, objcolor[2] / 255)
+            self.ren.GradientBackgroundOff()
+            self.renWin.Render()
+
+
+    def save_file(self):
+        try:
+            item = self.ui.treeWidget.currentItem()
+            parent = item.parent()
+        except:
+            parent = None
+        if parent is None:
+            pass
+            QMessageBox.warning(self.ui.mainWidget, '警告', '请先选中数据对象！')
+        else:
+            current_data = OBJECT_DICT[item.text(0)]['data']
+            path = QFileDialog.getSaveFileName(self.ui.mainWidget, '保存文件', "",
+                                               "PCD Files (*.pcd);;ASCII Files (*.txt *.asc *.csv *.pts *.xyz);;"
+                                               "LAS Files (*.las *.laz);;PLY Files (*.ply);;"
+                                               "Mesh Files (*.obj *.stl *.off);;3DS Files (*.3ds);;VTK Files (*.vtk)")[
+                0]
+            if len(path) != 0:
+                if '.pcd' in path:
+                    pcd = o3d.geometry.PointCloud()
+                    pcd.points = o3d.utility.Vector3dVector(current_data)
+                    o3d.io.write_point_cloud(path, pcd)
+                    self.update_listWidget('保存文件成功：' + path)
+                elif '.txt' in path or '.asc' in path:
+                    np.savetxt(path, current_data)
+                    self.update_listWidget('保存文件成功：' + path)
+                elif '.las' in path:
+                    las = laspy.create(file_version="1.2", point_format=3)
+                    las.x = current_data[:, 0]
+                    las.y = current_data[:, 1]
+                    las.z = current_data[:, 2]
+                    las.red = PROPERTY_DICT[item.text(0)]['colors'][:, 0] / 255
+                    las.green = PROPERTY_DICT[item.text(0)]['colors'][:, 1] / 255
+                    las.blue = PROPERTY_DICT[item.text(0)]['colors'][:, 2] / 255
+                    las.write(path)
+                    self.update_listWidget('保存文件成功：' + path)
+                elif '.' in path:
+                    QMessageBox.warning(self.ui.mainWidget, '警告', '格式不支持！')
