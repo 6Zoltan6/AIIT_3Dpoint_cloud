@@ -71,6 +71,9 @@ class MainWindow(QMainWindow):
         self.ui.action_11.triggered.connect(self.merge)
         self.ui.action_10.triggered.connect(self.copy)
         self.ui.action_14.triggered.connect(self.delete)
+        self.ui.action_12.triggered.connect(self.transform)
+        self.ui.action_9.triggered.connect(self.fix_horizontal)
+
         self.update_listWidget(info='*** 初始化成功 ***')
 
 
@@ -695,3 +698,121 @@ class MainWindow(QMainWindow):
                     CURRENT_OBJECT = {}
                     BOUND_BOX = []
                     del PROPERTY_DICT[item.text(0)]
+
+    # 按钮对应函数及子窗口信号返回函数
+    def transform(self):
+        try:
+            item = self.ui.treeWidget.currentItem()
+            parent = item.parent()
+        except:
+            parent = None
+        if parent is None:
+            pass
+            QMessageBox.warning(self.ui.mainWidget, '警告', '请先选中数据对象！')
+        else:
+            current_data = OBJECT_DICT[item.text(0)]['data']
+            child_window = Child_Transform(item.text(0), parent.text(0), current_data)
+            self.gridLayout.addWidget(child_window)
+            child_window.setWindowModality(Qt.ApplicationModal)
+            child_window.show()
+            child_window._signal.connect(self.transform_signal)
+
+    def transform_signal(self, info):
+        self.grabKeyboard()
+        file_name = self.ui.treeWidget.currentItem().text(0) + '_transform'
+        OBJECT_DICT[file_name] = {'type': 'point'}
+        OBJECT_DICT[file_name]['data'] = info['points']
+        self.update_treeWidget(status='addsub', info=[self.ui.treeWidget.currentItem().parent().text(0), file_name])
+        colors = 255 * np.ones((len(info['points']), 3))
+        PROPERTY_DICT[file_name] = {'Name': file_name, 'Visible': 1, 'Color': 'None', 'colors': colors,
+                                    'Pointnum': len(OBJECT_DICT[file_name]['data']), 'Pointsize': 1}
+        self.show_point(OBJECT_DICT[file_name]['data'], file_name, colors)
+
+    def fix_horizontal(self):
+        try:
+            item = self.ui.treeWidget.currentItem()
+            parent = item.parent()
+        except:
+            parent = None
+        if parent is None:
+            pass
+            QMessageBox.warning(self.ui.mainWidget, '警告', '请先选中数据对象！')
+        else:
+            current_data = OBJECT_DICT[item.text(0)]['data']
+            pcd = o3d.geometry.PointCloud()
+            pcd.points = o3d.utility.Vector3dVector(current_data[:, :3])
+            # 执行点云平面拟合
+            plane_model, inliers = pcd.segment_plane(distance_threshold=0.01, ransac_n=3, num_iterations=1000)
+            [a, b, c, d] = plane_model
+            # 计算旋转矩阵将点云平面与水平面对齐
+            normal = np.array([a, b, c])
+            z_axis = np.array([0, 0, 1])
+            origin = np.array([0, 0, -d / c])
+            # 计算旋转轴
+            rotation_axis = np.cross(normal, z_axis)
+            rotation_axis /= np.linalg.norm(rotation_axis)  # 归一化旋转轴
+            # 计算旋转角度
+            rotation_angle = np.arccos(np.dot(normal, z_axis))
+            rotation_vector = rotation_axis * rotation_angle
+            # 调用get_rotation_matrix_from_axis_angle函数获取旋转矩阵
+            rotation_matrix = o3d.geometry.get_rotation_matrix_from_axis_angle(rotation_vector)
+            translation = -np.dot(rotation_matrix, origin)
+            # 创建刚性变换矩阵
+            transformation_matrix = np.identity(4)
+            transformation_matrix[:3, :3] = rotation_matrix
+            transformation_matrix[:3, 3] = translation
+            # 应用刚性变换矩阵将点云变换为水平状态
+            pcd_transformed = pcd.transform(transformation_matrix)
+            transformed_points = np.asarray(pcd_transformed.points)
+            file_name = self.ui.treeWidget.currentItem().text(0) + '_horizontal'
+            OBJECT_DICT[file_name] = {'type': 'point'}
+            OBJECT_DICT[file_name]['data'] = transformed_points
+            self.update_treeWidget(status='addsub', info=[self.ui.treeWidget.currentItem().parent().text(0), file_name])
+            colors = 255 * np.ones((len(transformed_points), 3))
+            PROPERTY_DICT[file_name] = {'Name': file_name, 'Visible': 1, 'Color': 'None', 'colors': colors,
+                                        'Pointnum': len(OBJECT_DICT[file_name]['data']), 'Pointsize': 1}
+            self.show_point(OBJECT_DICT[file_name]['data'], file_name, colors)
+
+
+# 子窗口
+def Click_TextEdit(self):
+    pass
+
+
+class Child_Transform(QWidget):
+    _signal = QtCore.Signal(dict)
+
+    def __init__(self, filename, parent, points):
+        super().__init__()
+        self.filename = filename
+        self.parent = parent
+        self.points = points
+        desktop = QtWidgets.QApplication.desktop()
+        self.setGeometry(desktop.width() / 2 - 150, desktop.height() / 2 - 150, 300, 300)
+        self.setFixedSize(self.width(), self.height())
+        self.setWindowTitle("点云刚性变换")
+
+        self.text = Click_TextEdit(self)
+        self.text.clicked.connect(self.focus)
+        self.text.setGeometry(10, 10, 280, 240)
+
+        self.btn1 = QtWidgets.QPushButton(self)
+        self.btn1.setGeometry(QtCore.QRect(90, 255, 50, 30))
+        self.btn1.setText("确定")
+        self.btn1.clicked.connect(lambda: self.getText())
+        self.btn2 = QtWidgets.QPushButton(self)
+        self.btn2.setGeometry(QtCore.QRect(180, 255, 50, 30))
+        self.btn2.setText("取消")
+        self.btn2.clicked.connect(self.close)
+
+    def getText(self):
+        transform = self.text.toPlainText()
+        transform = np.array([float(x) for x in transform.split()]).reshape(4, 4)
+        transformed_points = np.dot(transform, np.concatenate((self.points, np.ones((self.points.shape[0], 1))), axis=1).T).T[:, :3]
+        self._signal.emit({'points': transformed_points})
+
+    def closeEvent(self, event):
+        event.accept()
+
+    def focus(self):
+        self.text.grabKeyboard()
