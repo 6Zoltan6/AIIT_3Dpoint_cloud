@@ -69,6 +69,8 @@ class MainWindow(QMainWindow):
         self.ui.action_16.triggered.connect(self.height_color)
         self.ui.action_50.triggered.connect(self.intensity_color)
         self.ui.action_11.triggered.connect(self.merge)
+        self.ui.action_10.triggered.connect(self.copy)
+        self.ui.action_14.triggered.connect(self.delete)
         self.update_listWidget(info='*** 初始化成功 ***')
 
 
@@ -616,3 +618,80 @@ class MainWindow(QMainWindow):
                                         'Pointnum': len(OBJECT_DICT[file_name]['data']), 'Pointsize': 1}
             self.show_point(OBJECT_DICT[file_name]['data'], file_name, colors)
 
+    # def merge(self):
+    #     try:
+    #         items = self.ui.treeWidget.selectedItems()
+    #         if len(items) < 2:
+    #             QMessageBox.warning(self.ui.mainWidget, '警告', '请选中至少两个点云！')
+    #             return
+    #         parent = items[0].parent()
+    #     except:
+    #         parent = None
+    #     if parent is None:
+    #         QMessageBox.warning(self.ui.mainWidget, '警告', '请先选中数据对象！')
+    #     else:
+    #         current_data_list = []
+    #         colors_list = []
+    #         for item in items:
+    #             current_data = OBJECT_DICT[item.text(0)]['data']
+    #             colors = PROPERTY_DICT[item.text(0)]['colors']
+    #             current_data_list.append(current_data)
+    #             colors_list.append(colors)
+    #
+    #         current_data = np.vstack(current_data_list)
+    #         colors = np.vstack(colors_list)
+    #         file_name = 'merged'
+    #         OBJECT_DICT[file_name] = {'type': 'point'}
+    #         OBJECT_DICT[file_name]['data'] = current_data
+    #         self.update_treeWidget(status='addsub', info=[parent.text(0), file_name])
+    #         PROPERTY_DICT[file_name] = {'Name': file_name, 'Visible': 1, 'Color': 'RGB', 'colors': colors,
+    #                                     'Pointnum': len(OBJECT_DICT[file_name]['data']), 'Pointsize': 1}
+    #         self.show_point(OBJECT_DICT[file_name]['data'], file_name, colors)
+
+    def copy(self):
+        try:
+            item = self.ui.treeWidget.currentItem()
+            parent = item.parent()
+        except:
+            parent = None
+        if parent is None:
+            pass
+            QMessageBox.warning(self.ui.mainWidget, '警告', '请先选中数据对象！')
+        else:
+            current_data = OBJECT_DICT[item.text(0)]['data']
+            colors = PROPERTY_DICT[item.text(0)]['colors']
+            file_name = item.text(0) + '_copy'
+            OBJECT_DICT[file_name] = {'type': 'point'}
+            OBJECT_DICT[file_name]['data'] = current_data
+            self.update_treeWidget(status='addsub', info=[parent.text(0), file_name])
+            PROPERTY_DICT[file_name] = {'Name': file_name, 'Visible': 1, 'Color': 'RGB', 'colors': colors,
+                                        'Pointnum': len(OBJECT_DICT[file_name]['data']), 'Pointsize': 1}
+            self.show_point(OBJECT_DICT[file_name]['data'], file_name, colors)
+
+    def delete(self):
+        try:
+            item = self.ui.treeWidget.currentItem()
+            parent = item.parent()
+        except:
+            parent = None
+        if parent is None:
+            QMessageBox.warning(self.ui.mainWidget, '警告', '请先选中数据对象！')
+        else:
+            items = self.ui.treeWidget.selectedItems()
+            for item in items:
+                parent = item.parent()
+                if parent is None:
+                    QMessageBox.warning(self.ui.mainWidget, '警告', '请选中点云对象！')
+                else:
+                    # 清除显示
+                    self.ren.RemoveActor(VIEW_DICT[item.text(0)][0])
+                    self.renWin.Render()
+                    # 清除数据名和属性
+                    self.update_treeWidget(status='delete', info=[parent.text(0), item])
+                    self.ui.tableWidget.clearContents()
+                    # 清除数据
+                    del OBJECT_DICT[item.text(0)]
+                    del VIEW_DICT[item.text(0)]
+                    CURRENT_OBJECT = {}
+                    BOUND_BOX = []
+                    del PROPERTY_DICT[item.text(0)]
